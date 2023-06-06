@@ -1,5 +1,5 @@
 service: notes
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 provider:
   name: aws
@@ -8,6 +8,12 @@ provider:
   region: us-east-1
 
 functions:
+  authorizer:
+    handler: authorizer.handler
+    environment:
+      COGNITO_USERPOOL_ID: !Ref cognitoUserPool
+      COGNITO_WEB_CLIENT_ID: !Ref cognitoUserPoolWebclient
+
   createNote:
     handler: handler.createNote
     environment:
@@ -15,13 +21,15 @@ functions:
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     iamRoleStatements:
       - Effect: Allow
-        Action: 
+        Action:
           - dynamodb:PutItem
         Resource: !GetAtt notesTable.Arn
     events:
-     - http: 
-        method: post
-        path: notes
+      - http:
+          method: post
+          path: notes
+          authorizer: authorizer
+
   updateNote:
     handler: handler.updateNote
     environment:
@@ -29,13 +37,15 @@ functions:
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     iamRoleStatements:
       - Effect: Allow
-        Action: 
+        Action:
           - dynamodb:UpdateItem
         Resource: !GetAtt notesTable.Arn
     events:
-     - http: 
-        method: put
-        path: notes/{id}
+      - http:
+          method: put
+          path: notes/{id}
+          authorizer: authorizer
+
   deleteNote:
     handler: handler.deleteNote
     environment:
@@ -43,13 +53,15 @@ functions:
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     iamRoleStatements:
       - Effect: Allow
-        Action: 
+        Action:
           - dynamodb:DeleteItem
         Resource: !GetAtt notesTable.Arn
     events:
-     - http: 
-        method: delete
-        path: notes/{id}
+      - http:
+          method: delete
+          path: notes/{id}
+          authorizer: authorizer
+
   getAllNotes:
     handler: handler.getAllNotes
     environment:
@@ -57,29 +69,21 @@ functions:
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     iamRoleStatements:
       - Effect: Allow
-        Action: 
+        Action:
           - dynamodb:Scan
         Resource: !GetAtt notesTable.Arn
     events:
-     - http: 
-        method: get
-        path: notes
+      - http:
+          method: get
+          path: notes
+          authorizer:
+            name: userpool_authorizer
+            type: COGNITO_USER_POOLS
+            arn: !GetAtt cognitoUserPool.Arn
 
-plugins: 
+plugins:
   - serverless-iam-roles-per-function
 
 # you can add CloudFormation resource templates here
 resources:
-  Resources:
-    notesTable:
-      Type: AWS::DynamoDB::Table
-      Properties: 
-        TableName: notes
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: notesId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: notesId
-            KeyType: HASH
-
+  Resources: ${file(resources.yml)}
