@@ -1,52 +1,53 @@
-# Notes dynamodb table
-notesTable:
-  Type: AWS::DynamoDB::Table
-  Properties:
-    TableName: notes
-    BillingMode: PAY_PER_REQUEST
-    AttributeDefinitions:
-      - AttributeName: notesId
-        AttributeType: S
-    KeySchema:
-      - AttributeName: notesId
-        KeyType: HASH
+Resources:
+  # Notes dynamodb table
+  notesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: notes-${self:provider.stage}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: notesId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: notesId
+          KeyType: HASH
 
-# Cognito user pool
-cognitoUserPool:
-  Type: AWS::Cognito::UserPool
-  Properties:
-    UserPoolName: NotesUserPool
+  # Cognito user pool
+  cognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: notesuserpool-${self:provider.stage}
 
-# User pool web client
-cognitoUserPoolWebclient:
-  Type: AWS::Cognito::UserPoolClient
-  Properties:
-    UserPoolId: !Ref cognitoUserPool
-    ClientName: web
-    AllowedOAuthFlowsUserPoolClient: true
-    SupportedIdentityProviders:
-      - COGNITO
-    AllowedOAuthScopes:
-      - phone
-      - email
-      - profile
-      - openid
-    AllowedOAuthFlows:
-      - implicit
-    CallbackURLs:
-      - http://localhost:3000
+  # User pool web client
+  cognitoUserPoolWebclient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref cognitoUserPool
+      ClientName: web
+      AllowedOAuthFlowsUserPoolClient: true
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthScopes:
+        - phone
+        - email
+        - profile
+        - openid
+      AllowedOAuthFlows:
+        - implicit
+      CallbackURLs:
+        - http://localhost:3000
 
-# User pool domain
-cognitoUserPoolDoamin:
-  Type: AWS::Cognito::UserPoolDomain
-  Properties:
-    UserPoolId: !Ref cognitoUserPool
-    Domain: notesuserpooldomainmenegon
+  # User pool domain
+  cognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref cognitoUserPool
+      Domain: notesuserpooldomainmenegon-${self:provider.stage}
 
-# Application parameters
-userPoolIdParam:
-  Type: AWS::SSM::Parameter
-  Properties:
-    Name: /notes/dev/userPoolId
-    Type: String
-    Value: !GetAtt cognitoUserPool.Arn
+  # Application parameters
+  userPoolArnParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /notes/${self:provider.stage}/userPoolArn
+      Type: String
+      Value: !GetAtt cognitoUserPool.Arn

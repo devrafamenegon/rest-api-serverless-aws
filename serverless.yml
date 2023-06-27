@@ -1,10 +1,10 @@
-service: notes
+service: notes-api
 frameworkVersion: "3"
 
 provider:
   name: aws
   runtime: nodejs14.x
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   region: us-east-1
 
 functions:
@@ -86,4 +86,4 @@ plugins:
 
 # you can add CloudFormation resource templates here
 resources:
-  Resources: ${file(resources.yml)}
+  - ${file(resources.yml)}
